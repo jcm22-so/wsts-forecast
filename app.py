@@ -43,6 +43,7 @@ else:
     all_options = sorted(df['Region'].dropna().unique().tolist())
 
 # Select All toggle
+st.sidebar.write(all_options)
 select_all = st.sidebar.checkbox("Select all", value=True)
 
 if select_all:
