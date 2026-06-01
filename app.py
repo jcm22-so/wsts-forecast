@@ -12,6 +12,7 @@ if uploaded is None:
     st.stop()
 
 df = pd.read_excel(uploaded)
+st.write(df.columns.tolist())  # ← agrega esta línea
 df.columns = df.columns.str.strip().str.title()
 df['Year']  = pd.to_numeric(df['Year'],  errors='coerce')
 df['Month'] = pd.to_numeric(df['Month'], errors='coerce')
