@@ -13,7 +13,12 @@ if uploaded is None:
 
 df = pd.read_excel(uploaded)
 df.columns = df.columns.str.strip().str.title()
-df['Date'] = pd.to_datetime(df[['Year','Month']].assign(Day=1))
+df['Year']  = pd.to_numeric(df['Year'],  errors='coerce')
+df['Month'] = pd.to_numeric(df['Month'], errors='coerce')
+df.dropna(subset=['Year','Month'], inplace=True)
+df['Year']  = df['Year'].astype(int)
+df['Month'] = df['Month'].astype(int)
+df['Date']  = pd.to_datetime(df[['Year','Month']].assign(Day=1))
 
 # ── 2. Sidebar filters ──────────────────────────────────────
 st.sidebar.header("Filters")
