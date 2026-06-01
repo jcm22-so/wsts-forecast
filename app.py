@@ -12,9 +12,11 @@ if uploaded is None:
     st.stop()
 
 df = pd.read_excel(uploaded)
-st.write(df.columns.tolist())  # ← agrega esta línea
+
 df.columns = df.columns.str.strip().str.title()
-st.write(df['Category'].unique().tolist())
+
+df['Category'] = df['Category'].str.strip().str.title()
+df['Region']   = df['Region'].str.strip().str.title()
 df['Year']  = pd.to_numeric(df['Year'],  errors='coerce')
 df['Month'] = pd.to_numeric(df['Month'], errors='coerce')
 df.dropna(subset=['Year','Month'], inplace=True)
