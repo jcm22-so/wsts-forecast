@@ -13,22 +13,21 @@ if uploaded is None:
     st.info("Please upload your WSTS.xlsx file to continue.")
     st.stop()
 
-@st.cache_data
-def load_data(file):
-    df = pd.read_excel(file)
-    df.columns = df.columns.str.strip().str.title()
-    df['Category'] = df['Category'].str.strip().str.title()
-    df['Region']   = df['Region'].str.strip().str.title()
-    df['Value']    = pd.to_numeric(df['Value'], errors='coerce')
-    df['Year']     = pd.to_numeric(df['Year'],  errors='coerce')
-    df['Month']    = pd.to_numeric(df['Month'], errors='coerce')
-    df.dropna(subset=['Year','Month','Value'], inplace=True)
-    df['Year']     = df['Year'].astype(int)
-    df['Month']    = df['Month'].astype(int)
-    df['Date']     = pd.to_datetime(df[['Year','Month']].assign(Day=1))
-    return df
+df = pd.read_excel(uploaded)
+df.columns = df.columns.str.strip().str.title()
+df['Category'] = df['Category'].str.strip().str.title()
+df['Region']   = df['Region'].str.strip().str.title()
+df['Value']    = pd.to_numeric(df['Value'], errors='coerce')
+df['Year']     = pd.to_numeric(df['Year'],  errors='coerce')
+df['Month']    = pd.to_numeric(df['Month'], errors='coerce')
+df.dropna(subset=['Year','Month','Value'], inplace=True)
+df['Year']     = df['Year'].astype(int)
+df['Month']    = df['Month'].astype(int)
+df['Date']     = pd.to_datetime(df[['Year','Month']].assign(Day=1))
 
-df = load_data(uploaded)
+# Debug — remove after confirming it works
+st.sidebar.write("Rows loaded:", len(df))
+st.sidebar.write("Categories:", df['Category'].unique().tolist())
 
 # ── 2. Sidebar filters ──────────────────────────────────────
 st.sidebar.header("Filters")
@@ -36,14 +35,12 @@ st.sidebar.header("Filters")
 view_by = st.sidebar.radio("View by", ["Category", "Region"])
 
 if view_by == "Category":
-    group_col = "Category"
+    group_col   = "Category"
     all_options = sorted(df['Category'].dropna().unique().tolist())
 else:
-    group_col = "Region"
+    group_col   = "Region"
     all_options = sorted(df['Region'].dropna().unique().tolist())
 
-# Select All toggle
-st.sidebar.write(all_options)
 select_all = st.sidebar.checkbox("Select all", value=True)
 
 if select_all:
