@@ -14,24 +14,24 @@ if uploaded is None:
     st.stop()
 
 df = pd.read_excel(uploaded)
-st.write("Shape:", df.shape)
-st.write("Columns:", df.columns.tolist())
-st.write("First rows:", df.head())
-st.stop()  # detiene el resto para ver solo esto
 df.columns = df.columns.str.strip().str.title()
 df['Category'] = df['Category'].str.strip().str.title()
 df['Region']   = df['Region'].str.strip().str.title()
 df['Value']    = pd.to_numeric(df['Value'], errors='coerce')
-df['Year']     = pd.to_numeric(df['Year'],  errors='coerce')
-df['Month']    = pd.to_numeric(df['Month'], errors='coerce')
-df.dropna(subset=['Year','Month','Value'], inplace=True)
-df['Year']     = df['Year'].astype(int)
-df['Month']    = df['Month'].astype(int)
-df['Date']     = pd.to_datetime(df[['Year','Month']].assign(Day=1))
+df['Year']     = pd.to_numeric(df['Year'], errors='coerce')
 
-# Debug — remove after confirming it works
-st.sidebar.write("Rows loaded:", len(df))
-st.sidebar.write("Categories:", df['Category'].unique().tolist())
+# Convert Month from name to number
+month_map = {
+    'January':1,  'February':2,  'March':3,     'April':4,
+    'May':5,       'June':6,      'July':7,      'August':8,
+    'September':9, 'October':10,  'November':11, 'December':12
+}
+df['Month'] = df['Month'].map(month_map)
+
+df.dropna(subset=['Year','Month','Value'], inplace=True)
+df['Year']  = df['Year'].astype(int)
+df['Month'] = df['Month'].astype(int)
+df['Date']  = pd.to_datetime(df[['Year','Month']].assign(Day=1))
 
 # ── 2. Sidebar filters ──────────────────────────────────────
 st.sidebar.header("Filters")
