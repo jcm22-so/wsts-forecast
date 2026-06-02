@@ -14,6 +14,10 @@ if uploaded is None:
     st.stop()
 
 df = pd.read_excel(uploaded)
+st.write("Shape:", df.shape)
+st.write("Columns:", df.columns.tolist())
+st.write("First rows:", df.head())
+st.stop()  # detiene el resto para ver solo esto
 df.columns = df.columns.str.strip().str.title()
 df['Category'] = df['Category'].str.strip().str.title()
 df['Region']   = df['Region'].str.strip().str.title()
