@@ -9,13 +9,13 @@ st.set_page_config(page_title="WSTS Semiconductor Forecast", layout="wide")
 
 # ── Navigation menu ─────────────────────────────────────────
 st.sidebar.title("📂 Navigation")
-page = st.sidebar.radio("Go to", ["🏠 Introduction", "📊 Power BI Dashboards", "🔮 Predictive Models"])
+page = st.sidebar.radio("Go to", [" Introduction", " Power BI Dashboards", " Predictive Models"])
 
 # ════════════════════════════════════════════════════════════
 # PAGE 1 — INTRODUCTION
 # ════════════════════════════════════════════════════════════
-if page == "🏠 Introduction":
-    st.title("🏠 Semiconductor Sales Analysis")
+if page == " Introduction":
+    st.title(" Semiconductor Sales Analysis")
     st.markdown("---")
 
     st.markdown("""
@@ -26,12 +26,12 @@ if page == "🏠 Introduction":
 
     st.markdown("---")
     col1, col2, col3 = st.columns(3)
-    col1.metric("📦 Dataset", "WSTS")
-    col2.metric("📅 Frequency", "Monthly")
-    col3.metric("🌍 Coverage", "Global")
+    col1.metric(" Dataset", "WSTS")
+    col2.metric(" Frequency", "Monthly")
+    col3.metric(" Coverage", "Global")
 
     st.markdown("---")
-    st.markdown("## 📋 Dataset Structure")
+    st.markdown("##  Dataset Structure")
     st.markdown("""
     | Column | Description |
     |--------|-------------|
@@ -43,18 +43,18 @@ if page == "🏠 Introduction":
     """)
 
     st.markdown("---")
-    st.markdown("## 🔍 What you can do here")
+    st.markdown("##  What you can do here")
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.info("### 📊 Power BI Dashboards\nExplore interactive dashboards with sales trends, market share, and regional breakdowns.")
+        st.info("###  Power BI Dashboards\nExplore interactive dashboards with sales trends, market share, and regional breakdowns.")
     with c2:
-        st.success("### 🔮 Predictive Models\nRun Prophet and SARIMA forecasts by Category or Region with MAD, MSE, and MAPE metrics.")
+        st.success("###  Predictive Models\nRun Prophet and SARIMA forecasts by Category or Region with MAD, MSE, and MAPE metrics.")
     with c3:
-        st.warning("### 🏆 Model Comparison\nCompare both models side by side and identify which one predicts best for each group.")
+        st.warning("###  Model Comparison\nCompare both models side by side and identify which one predicts best for each group.")
 
     st.markdown("---")
-    st.markdown("## 📈 Models Used")
+    st.markdown("##  Models Used")
     st.markdown("""
     **Prophet** — Developed by Meta. Automatically detects trends and yearly seasonality.
     Robust to missing data and outliers. Generates a 95% confidence interval.
@@ -64,7 +64,7 @@ if page == "🏠 Introduction":
     """)
 
     st.markdown("---")
-    st.markdown("## 📐 Evaluation Metrics")
+    st.markdown("##  Evaluation Metrics")
     st.markdown("""
     | Metric | Description |
     |--------|-------------|
@@ -82,8 +82,8 @@ if page == "🏠 Introduction":
 # ════════════════════════════════════════════════════════════
 # PAGE 2 — POWER BI DASHBOARDS
 # ════════════════════════════════════════════════════════════
-elif page == "📊 Power BI Dashboards":
-    st.title("📊 Power BI Dashboards")
+elif page == " Power BI Dashboards":
+    st.title(" Power BI Dashboards")
     st.markdown("---")
 
     import streamlit.components.v1 as components
@@ -117,8 +117,8 @@ elif page == "📊 Power BI Dashboards":
 # ════════════════════════════════════════════════════════════
 # PAGE 3 — PREDICTIVE MODELS
 # ════════════════════════════════════════════════════════════
-elif page == "🔮 Predictive Models":
-    st.title("🔮 Predictive Models — Time Series & Forecast")
+elif page == " Predictive Models":
+    st.title(" Predictive Models — Time Series & Forecast")
     st.markdown("---")
 
     # ── Upload file ──
@@ -222,7 +222,7 @@ elif page == "🔮 Predictive Models":
 
         # PROPHET
         if run_prophet:
-            st.markdown("#### 🔮 Prophet")
+            st.markdown("####  Prophet")
             with st.spinner(f"Fitting Prophet for {grp}..."):
                 df_p = train.reset_index().rename(columns={'Date':'ds','Value':'y'})
                 m = Prophet(yearly_seasonality=True, weekly_seasonality=False,
@@ -267,7 +267,7 @@ elif page == "🔮 Predictive Models":
 
         # SARIMA
         if run_sarima:
-            st.markdown("#### 📈 SARIMA")
+            st.markdown("####  SARIMA")
             with st.spinner(f"Fitting SARIMA for {grp}..."):
                 model  = SARIMAX(train, order=(1,1,1), seasonal_order=(1,1,1,12),
                                  enforce_stationarity=False, enforce_invertibility=False)
@@ -314,7 +314,7 @@ elif page == "🔮 Predictive Models":
 
     # ── Metrics summary ──
     st.markdown("---")
-    st.subheader("📊 Evaluation Metrics — Prophet vs SARIMA")
+    st.subheader(" Evaluation Metrics — Prophet vs SARIMA")
     if metrics_list:
         metrics_df = pd.DataFrame(metrics_list)
         st.dataframe(metrics_df, use_container_width=True)
@@ -339,7 +339,7 @@ elif page == "🔮 Predictive Models":
             legend=dict(orientation='h'))
         st.plotly_chart(fig_m, use_container_width=True)
 
-        st.subheader("🏆 Best Model per Group (lowest MAPE)")
+        st.subheader(" Best Model per Group (lowest MAPE)")
         best = (mape_df.sort_values('MAPE_%')
                        .groupby(group_col)
                        .first()
