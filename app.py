@@ -4,8 +4,22 @@ import numpy as np
 import plotly.graph_objects as go
 from prophet import Prophet
 from statsmodels.tsa.statespace.sarimax import SARIMAX
+from datetime import datetime
 
 st.set_page_config(page_title="WSTS Semiconductor Forecast", layout="wide")
+
+# ════════════════════════════════════════════════════════════
+# ACTIVITY LOG — stored in session_state across users
+# ════════════════════════════════════════════════════════════
+if "activity_log" not in st.session_state:
+    st.session_state.activity_log = []   # list of dicts
+
+def log_activity(username, action):
+    st.session_state.activity_log.append({
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "user":      username,
+        "action":    action
+    })
 
 # ════════════════════════════════════════════════════════════
 # LOGIN
@@ -13,6 +27,8 @@ st.set_page_config(page_title="WSTS Semiconductor Forecast", layout="wide")
 def check_login():
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
+        st.session_state.username  = ""
+        st.session_state.role      = ""
 
     if not st.session_state.logged_in:
         col1, col2, col3 = st.columns([1, 1.2, 1])
@@ -27,9 +43,12 @@ def check_login():
 
             if st.button("Login", use_container_width=True):
                 credentials = st.secrets.get("credentials", {})
+                roles       = st.secrets.get("roles", {})
                 if username in credentials and credentials[username] == password:
                     st.session_state.logged_in = True
                     st.session_state.username  = username
+                    st.session_state.role      = roles.get(username, "viewer")
+                    log_activity(username, "Logged in")
                     st.rerun()
                 else:
                     st.error("❌ Incorrect username or password")
@@ -38,18 +57,37 @@ def check_login():
 check_login()
 
 # ── Sidebar user info & logout ───────────────────────────────
-st.sidebar.markdown(f"👤 **{st.session_state.username}**")
+role     = st.session_state.role
+username = st.session_state.username
+
+st.sidebar.markdown(f"👤 **{username}** `({role})`")
 if st.sidebar.button("Logout"):
+    log_activity(username, "Logged out")
     st.session_state.logged_in = False
+    st.session_state.username  = ""
+    st.session_state.role      = ""
     st.rerun()
 
 st.sidebar.markdown("---")
 
 # ════════════════════════════════════════════════════════════
-# NAVIGATION
+# NAVIGATION — admin sees extra Users panel
 # ════════════════════════════════════════════════════════════
 st.sidebar.title("📂 Navigation")
-page = st.sidebar.radio("Go to", ["🏠 Introduction", "📊 Power BI Dashboards", "🔮 Predictive Models"])
+
+if role == "admin":
+    pages = ["🏠 Introduction", "📊 Power BI Dashboards", "🔮 Predictive Models", "👥 User Activity"]
+else:
+    pages = ["🏠 Introduction", "📊 Power BI Dashboards", "🔮 Predictive Models"]
+
+page = st.sidebar.radio("Go to", pages)
+
+# Log page visits
+if "last_page" not in st.session_state:
+    st.session_state.last_page = ""
+if st.session_state.last_page != page:
+    log_activity(username, f"Visited page: {page}")
+    st.session_state.last_page = page
 
 # ════════════════════════════════════════════════════════════
 # PAGE 1 — INTRODUCTION
@@ -57,7 +95,6 @@ page = st.sidebar.radio("Go to", ["🏠 Introduction", "📊 Power BI Dashboards
 if page == "🏠 Introduction":
     st.title("🏠 Semiconductor Sales Analysis")
     st.markdown("---")
-
     st.markdown("""
     ## About this project
     This application analyzes global semiconductor sales data from the **WSTS (World Semiconductor Trade Statistics)** dataset.
@@ -109,13 +146,9 @@ if page == "🏠 Introduction":
     |--------|-------------|
     | **MAD** | Mean Absolute Deviation — average error in original units |
     | **MSE** | Mean Squared Error — penalizes large errors more heavily |
-    | **MAPE** | Mean Absolute Percentage Error — error as a percentage, easy to interpret |
+    | **MAPE** | Mean Absolute Percentage Error — error as a percentage |
 
-    **MAPE interpretation:**
-    - < 10% → Excellent
-    - 10–20% → Good
-    - 20–50% → Acceptable
-    - > 50% → Poor
+    **MAPE interpretation:** < 10% Excellent · 10–20% Good · 20–50% Acceptable · > 50% Poor
     """)
 
 # ════════════════════════════════════════════════════════════
@@ -143,7 +176,6 @@ elif page == "📊 Power BI Dashboards":
     else:
         st.markdown("### Dashboard 1")
         components.iframe(src=POWERBI_URL_1, width=1200, height=600, scrolling=True)
-
         if POWERBI_URL_2:
             st.markdown("---")
             st.markdown("### Dashboard 2")
@@ -160,6 +192,8 @@ elif page == "🔮 Predictive Models":
     if uploaded is None:
         st.info("Please upload your WSTS.xlsx file to continue.")
         st.stop()
+
+    log_activity(username, "Uploaded WSTS.xlsx")
 
     df = pd.read_excel(uploaded)
     df.columns = df.columns.str.strip().str.title()
@@ -179,10 +213,8 @@ elif page == "🔮 Predictive Models":
     df['Month'] = df['Month'].astype(int)
     df['Date']  = pd.to_datetime(df[['Year','Month']].assign(Day=1))
 
-    # ── Sidebar filters ──
     st.sidebar.markdown("---")
     st.sidebar.header("Filters")
-
     view_by = st.sidebar.radio("View by", ["Category", "Region"])
 
     if view_by == "Category":
@@ -212,28 +244,22 @@ elif page == "🔮 Predictive Models":
     if not selected:
         st.warning("Please select at least one option from the sidebar.")
         st.stop()
-
     if not run_prophet and not run_sarima:
         st.warning("Please select at least one model from the sidebar.")
         st.stop()
 
     df_filtered = df[df[group_col].isin(selected)].copy()
 
-    # ── Time series overview ──
     st.subheader(f"Monthly Sales by {view_by}")
     ts = df_filtered.groupby(['Date', group_col])['Value'].sum().reset_index()
-
     fig = go.Figure()
     for grp in selected:
         sub = ts[ts[group_col] == grp]
-        fig.add_trace(go.Scatter(x=sub['Date'], y=sub['Value'],
-                                 mode='lines', name=grp))
-    fig.update_layout(template='plotly_white',
-                      xaxis_title='Date', yaxis_title='Sales',
+        fig.add_trace(go.Scatter(x=sub['Date'], y=sub['Value'], mode='lines', name=grp))
+    fig.update_layout(template='plotly_white', xaxis_title='Date', yaxis_title='Sales',
                       legend=dict(orientation='h'))
     st.plotly_chart(fig, use_container_width=True)
 
-    # ── Forecast per group ──
     metrics_list = []
 
     for grp in selected:
@@ -242,8 +268,7 @@ elif page == "🔮 Predictive Models":
 
         series = (df_filtered[df_filtered[group_col] == grp]
                   .groupby('Date')['Value'].sum()
-                  .rename('Value')
-                  .asfreq('MS'))
+                  .rename('Value').asfreq('MS'))
 
         if len(series) < 24:
             st.warning(f"'{grp}' has less than 24 months of data — skipping.")
@@ -253,7 +278,6 @@ elif page == "🔮 Predictive Models":
         test   = series.iloc[-12:]
         cutoff = series.index[-1]
 
-        # PROPHET
         if run_prophet:
             st.markdown("#### 🔮 Prophet")
             with st.spinner(f"Fitting Prophet for {grp}..."):
@@ -271,6 +295,8 @@ elif page == "🔮 Predictive Models":
                 mape_p = float(np.mean(np.abs((test.values - pred_test_p) / test.values)) * 100)
             else:
                 mad_p, mse_p, mape_p = None, None, None
+
+            log_activity(username, f"Ran Prophet forecast — {grp} ({forecast_months} months)")
 
             fut_p = fc_p[fc_p['ds'] > cutoff]
             fig_p = go.Figure()
@@ -298,7 +324,6 @@ elif page == "🔮 Predictive Models":
                 'MAPE_%': round(mape_p, 2) if mape_p is not None else 'N/A'
             })
 
-        # SARIMA
         if run_sarima:
             st.markdown("#### 📈 SARIMA")
             with st.spinner(f"Fitting SARIMA for {grp}..."):
@@ -317,9 +342,10 @@ elif page == "🔮 Predictive Models":
             else:
                 mad_s, mse_s, mape_s = None, None, None
 
+            log_activity(username, f"Ran SARIMA forecast — {grp} ({forecast_months} months)")
+
             fut_mean = fc_mean.iloc[12:]
             fut_ci   = fc_ci.iloc[12:]
-
             fig_s = go.Figure()
             fig_s.add_trace(go.Scatter(x=series.index, y=series.values,
                                        name='Historical', line=dict(color='steelblue')))
@@ -345,7 +371,6 @@ elif page == "🔮 Predictive Models":
                 'MAPE_%': round(mape_s, 2) if mape_s is not None else 'N/A'
             })
 
-    # ── Metrics summary ──
     st.markdown("---")
     st.subheader("📊 Evaluation Metrics — Prophet vs SARIMA")
     if metrics_list:
@@ -374,7 +399,81 @@ elif page == "🔮 Predictive Models":
 
         st.subheader("🏆 Best Model per Group (lowest MAPE)")
         best = (mape_df.sort_values('MAPE_%')
-                       .groupby(group_col)
-                       .first()
+                       .groupby(group_col).first()
                        .reset_index()[[group_col, 'Model', 'MAD', 'MSE', 'MAPE_%']])
         st.dataframe(best, use_container_width=True)
+
+# ════════════════════════════════════════════════════════════
+# PAGE 4 — USER ACTIVITY (admin only)
+# ════════════════════════════════════════════════════════════
+elif page == "👥 User Activity":
+    st.title("👥 User Activity Panel")
+    st.markdown("---")
+
+    credentials = st.secrets.get("credentials", {})
+    roles       = st.secrets.get("roles", {})
+
+    # ── Registered users table ──
+    st.subheader("📋 Registered Users")
+    users_data = [{"Username": u, "Role": roles.get(u, "viewer")} for u in credentials]
+    st.dataframe(pd.DataFrame(users_data), use_container_width=True)
+
+    st.markdown("---")
+
+    # ── Activity log ──
+    st.subheader("📜 Activity Log")
+
+    log = st.session_state.activity_log
+    if not log:
+        st.info("No activity recorded yet in this session.")
+    else:
+        log_df = pd.DataFrame(log)
+
+        # Filter by user
+        all_users = ["All"] + sorted(log_df['user'].unique().tolist())
+        filter_user = st.selectbox("Filter by user", all_users)
+        if filter_user != "All":
+            log_df = log_df[log_df['user'] == filter_user]
+
+        st.dataframe(log_df.sort_values('timestamp', ascending=False),
+                     use_container_width=True)
+
+        st.markdown("---")
+
+        # ── Summary per user ──
+        st.subheader("📊 Activity Summary per User")
+        summary = (pd.DataFrame(st.session_state.activity_log)
+                   .groupby('user')
+                   .agg(
+                       Total_Actions=('action', 'count'),
+                       Last_Seen=('timestamp', 'max'),
+                       Logins=('action', lambda x: (x == 'Logged in').sum())
+                   )
+                   .reset_index()
+                   .rename(columns={'user':'User'}))
+        st.dataframe(summary, use_container_width=True)
+
+        # ── Actions bar chart ──
+        fig_a = go.Figure()
+        fig_a.add_trace(go.Bar(
+            x=summary['User'],
+            y=summary['Total_Actions'],
+            marker_color='steelblue',
+            text=summary['Total_Actions'],
+            textposition='auto'
+        ))
+        fig_a.update_layout(
+            title='Total Actions per User',
+            xaxis_title='User', yaxis_title='Actions',
+            template='plotly_white')
+        st.plotly_chart(fig_a, use_container_width=True)
+
+        # ── Download log ──
+        st.markdown("---")
+        csv = pd.DataFrame(st.session_state.activity_log).to_csv(index=False)
+        st.download_button(
+            label="⬇️ Download activity log as CSV",
+            data=csv,
+            file_name="activity_log.csv",
+            mime="text/csv"
+        )
