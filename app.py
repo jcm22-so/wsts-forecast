@@ -160,7 +160,7 @@ elif page == "📊 Power BI Dashboards":
 
     import streamlit.components.v1 as components
 
-    POWERBI_URL_1 = ""   # https://app.powerbi.com/reportEmbed?reportId=4c7820fb-ef98-4363-a4d3-07fd437bfed2&autoAuth=true&ctid=f07b40ae-b60b-4e0f-bebe-afb42fc4dc69
+    POWERBI_URL_1 = "https://app.powerbi.com/reportEmbed?reportId=4c7820fb-ef98-4363-a4d3-07fd437bfed2&autoAuth=true&ctid=f07b40ae-b60b-4e0f-bebe-afb42fc4dc69"   # 
     POWERBI_URL_2 = ""   # ← Paste a second dashboard URL here (optional)
 
     if not POWERBI_URL_1:
