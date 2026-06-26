@@ -76,9 +76,9 @@ st.sidebar.markdown("---")
 st.sidebar.title("📂 Navigation")
 
 if role == "admin":
-    pages = ["🏠 Introduction", "📊 Power BI Dashboards", "🔮 Predictive Models", "👥 User Activity"]
+    pages = ["🏠 Introduction", "📊 Power BI Dashboards", " Predictive Models", "👥 User Activity"]
 else:
-    pages = ["🏠 Introduction", "📊 Power BI Dashboards", "🔮 Predictive Models"]
+    pages = ["🏠 Introduction", "📊 Power BI Dashboards", " Predictive Models"]
 
 page = st.sidebar.radio("Go to", pages)
 
@@ -125,9 +125,9 @@ if page == "🏠 Introduction":
     with c1:
         st.info("### 📊 Power BI Dashboards\nExplore interactive dashboards with sales trends, market share, and regional breakdowns.")
     with c2:
-        st.success("### 🔮 Predictive Models\nRun Prophet and SARIMA forecasts by Category or Region with MAD, MSE, and MAPE metrics.")
+        st.success("###  Predictive Models\nRun Prophet and SARIMA forecasts by Category or Region with MAD, MSE, and MAPE metrics.")
     with c3:
-        st.warning("### 🏆 Model Comparison\nCompare both models and identify which one predicts best for each group.")
+        st.warning("###  Model Comparison\nCompare both models and identify which one predicts best for each group.")
 
     st.markdown("---")
     st.markdown("## 📈 Models Used")
@@ -184,8 +184,8 @@ elif page == "📊 Power BI Dashboards":
 # ════════════════════════════════════════════════════════════
 # PAGE 3 — PREDICTIVE MODELS
 # ════════════════════════════════════════════════════════════
-elif page == "🔮 Predictive Models":
-    st.title("🔮 Predictive Models — Time Series & Forecast")
+elif page == " Predictive Models":
+    st.title(" Predictive Models — Time Series & Forecast")
     st.markdown("---")
 
     uploaded = st.file_uploader("Upload WSTS.xlsx", type=["xlsx"])
@@ -397,7 +397,7 @@ elif page == "🔮 Predictive Models":
             legend=dict(orientation='h'))
         st.plotly_chart(fig_m, use_container_width=True)
 
-        st.subheader("🏆 Best Model per Group (lowest MAPE)")
+        st.subheader(" Best Model per Group (lowest MAPE)")
         best = (mape_df.sort_values('MAPE_%')
                        .groupby(group_col).first()
                        .reset_index()[[group_col, 'Model', 'MAD', 'MSE', 'MAPE_%']])
